@@ -1,7 +1,7 @@
 # AI_model_for_physioGamification
 
 # Our Subteam(AI Team) Plan:
-![AI TEAM PLAN GANNT CHART]([https://github.com/shouqalhabs/pics/blob/main/AI%20Team%20Timeline.png])
+![AI Team Timeline](https://github.com/shouqalhabs/pics/raw/main/AI%20Team%20Timeline.png)
 
 # Project Tools:
 - Media Pipe (Python, C++)
