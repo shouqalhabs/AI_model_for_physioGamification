@@ -6,7 +6,7 @@ W1(2/2-8/2), W2(10/2-15/2), W3(17/2-22/2), W4(24/2-1/3), W5(3/3-8/3), W6(10/3-15
 
 # Project Tools:
 - MediaPipe (Python, C++)
-- VScode
+- VScode (.ipynb)
 - OpenCV 
 
 ## Our ai report dump 
