@@ -12,3 +12,6 @@ W1(2/2-8/2), W2(10/2-15/2), W3(17/2-22/2), W4(24/2-1/3), W5(3/3-8/3), W6(10/3-15
 ## Our ai report dump 
 https://quedusa-my.sharepoint.com/:w:/g/personal/431201849_qu_edu_sa/IQD0gNodc1RbSqJ-yt89hYuZAQw-T2zQhYBVpjyrFdtiyio?e=0NtYfy
 
+## HOW TO USE VSCODE:
+1. always when first open do pull
+2. whenever modifying: do push after
