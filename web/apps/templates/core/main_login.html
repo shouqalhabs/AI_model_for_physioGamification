@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rehabilitation Game</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Animated Nature Background */
+    .background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to top, #6cc070, #a8e6cf);
+      overflow: hidden;
+    }
+
+    /* Grass Animation */
+    .grass {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      height: 200px;
+      background: repeating-linear-gradient(
+        90deg,
+        #2e8b57,
+        #2e8b57 10px,
+        #3cb371 10px,
+        #3cb371 20px
+      );
+      animation: wave 4s infinite linear;
+    }
+
+    @keyframes wave {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(-50px); }
+      100% { transform: translateX(0); }
+    }
+
+    /* Center Container */
+    .container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      gap: 40px;
+    }
+
+    .card {
+      width: 250px;
+      height: 150px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .card:hover {
+      transform: scale(1.1);
+      background: #ffffff;
+    }
+
+    /* Floating Leaves */
+    .leaf {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: green;
+      border-radius: 50%;
+      opacity: 0.7;
+      animation: float 10s infinite linear;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(-10vh) translateX(0);
+      }
+      100% {
+        transform: translateY(110vh) translateX(100px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="background">
+    <div class="grass"></div>
+
+    <!-- Leaves -->
+    <div class="leaf" style="left:10%; animation-delay:0s"></div>
+    <div class="leaf" style="left:30%; animation-delay:2s"></div>
+    <div class="leaf" style="left:50%; animation-delay:4s"></div>
+    <div class="leaf" style="left:70%; animation-delay:1s"></div>
+    <div class="leaf" style="left:90%; animation-delay:3s"></div>
+  </div>
+
+  <div class="container">
+    <div class="card" onclick="login('gamer')">
+      Log in as a Gamer
+    </div>
+
+    <div class="card" onclick="login('doctor')">
+      Log in as a Doctor
+    </div>
+  </div>
+
+  <script>
+    function login(role) {
+      if(role === 'gamer') {
+        alert('Redirecting to Gamer Login...');
+      } else {
+        alert('Redirecting to Doctor Login...');
+      }
+    }
+  </script>
+
+</body>
+</html>
