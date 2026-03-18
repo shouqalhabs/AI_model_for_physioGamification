@@ -2,22 +2,91 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>Shapes Layout</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Main Login</title>
 
 <style>
+html, body {
+    height: 100%;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     margin: 0;
     background: #ffffff;
-    overflow-x: hidden; /* يمنع ظهور الشريط الأفقي */
+    overflow-x: hidden;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: #111827;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.brand {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+}
+
+.header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.header-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(17, 24, 39, 0.14);
+    background: rgba(255, 255, 255, 0.65);
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.header-btn:hover,
+.header-btn:focus-visible {
+    border-color: rgba(17, 24, 39, 0.28);
+}
+
+.header-btn:focus-visible {
+    outline: none;
 }
 
 /* الحاوية العامة: عمود يسار + صف + عمود يمين */
 .wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     display: flex;
     align-items: flex-start;
-    justify-content: center;
-    gap: 40px;
-    padding: 20px;
+    justify-content: space-between;
+    gap: 28px;
+    padding: 18px 22px;
 }
 
 /* الصف الأفقي */
@@ -25,12 +94,13 @@ body {
     display: flex;
     align-items: center;
     gap: 25px;
+    margin-top: 8px;
 }
 
 /* الأعمدة الجانبية */
 .column {
     display: flex;
-    flex-direction: column;;
+    flex-direction: column;
     gap: 25px;
 }
 
@@ -39,6 +109,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    box-shadow: 0 18px 45px rgba(17, 24, 39, 0.06);
+    opacity: 0.92;
+    will-change: transform;
 }
 
 /* .column .shape {
@@ -51,62 +124,152 @@ body {
 .s1 {
     width: 400px;
     height: 240px;
-    background: #ffcc00;
-    border-radius: 75px;
+    background: linear-gradient(135deg, rgba(255, 204, 0, 0.92), rgba(255, 204, 0, 0.62));
+    border-radius: 90px;
 }
 
 /* البنفسجي */
 .s2 {
     width: 175px;
     height: 240px;
-    background: #bc84ce;
-    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(188, 132, 206, 0.85), rgba(188, 132, 206, 0.55));
+    border-radius: 44px;
 }
 
 /* البرتقالي */
 .s3 {
     width: 280px;
     height: 240px;
-    background: #de7f4f;
-    border-radius: 45%;
+    background: linear-gradient(135deg, rgba(222, 127, 79, 0.80), rgba(222, 127, 79, 0.50));
+    border-radius: 52% 48% 60% 40% / 45% 55% 45% 55%;
 }
 
 /* البيج */
 .s4 {
     width: 175px;
     height: 240px;
-    background: #ddc7ab;
-    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(221, 199, 171, 0.92), rgba(221, 199, 171, 0.60));
+    border-radius: 44px;
 }
 
 /* الوردي */
 .s5 {
     width: 280px;
     height: 240px;
-    background: #eca4be;
-    border-radius: 45%;
+    background: linear-gradient(135deg, rgba(236, 164, 190, 0.82), rgba(236, 164, 190, 0.50));
+    border-radius: 48% 52% 44% 56% / 56% 44% 56% 44%;
 }
 
 /* الأزرق */
 .s6 {
     width: 175px;
     height: 240px;
-    background: #7ad8d6;
-    border-radius: 50px;
+    background: linear-gradient(135deg, rgba(122, 216, 214, 0.82), rgba(122, 216, 214, 0.50));
+    border-radius: 60px;
 }
 
 /* الأخضر */
 .s7 {
     width: 360px;
     height: 240px;
-    background: #c7e11a;
-    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(199, 225, 26, 0.78), rgba(199, 225, 26, 0.46));
+    border-radius: 52px;
+}
+
+/* Make the shapes feel like a frame */
+@media (max-width: 1100px) {
+    .s1 { width: 320px; height: 200px; }
+    .s7 { width: 280px; height: 200px; }
+    .s3, .s5 { width: 220px; height: 200px; }
+    .s2, .s4, .s6 { width: 150px; height: 200px; }
+    .wrapper { padding: 14px 14px; gap: 18px; }
+    .container { gap: 16px; }
+    .column { gap: 16px; }
+}
+
+/* Foreground content */
+.content {
+    position: relative;
+    min-height: 100%;
+    display: grid;
+    place-items: center;
+    padding: 56px 18px 40px;
+}
+
+.login-choices {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+}
+
+.login-link {
+    font-size: clamp(24px, 3.2vw, 44px);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    padding-bottom: 6px;
+    line-height: 1.1;
+}
+
+.login-link:hover,
+.login-link:focus-visible {
+    border-bottom-color: currentColor;
+}
+
+.login-link:focus-visible {
+    outline: none;
+}
+
+/* Sections */
+.section {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 90px 18px;
+    scroll-margin-top: 90px; /* header offset */
+}
+
+.section h2 {
+    margin: 0 0 12px;
+    font-size: clamp(22px, 2.6vw, 34px);
+    letter-spacing: -0.02em;
+}
+
+.section p {
+    margin: 0;
+    max-width: 70ch;
+    font-size: 16px;
+    line-height: 1.8;
+    color: rgba(17, 24, 39, 0.78);
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 600ms ease, transform 600ms ease;
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 </style>
 </head>
 
 <body>
+
+<header class="header">
+    <div class="brand" aria-label="Website name">rehabbo</div>
+    <nav class="header-nav" aria-label="Page navigation">
+        <a class="header-btn" href="#about">About Us</a>
+        <a class="header-btn" href="#contact">Contact Us</a>
+    </nav>
+</header>
 
 <div class="wrapper">
 
@@ -142,6 +305,83 @@ body {
     </div>
 
 </div>
+
+<main class="content">
+    <nav class="login-choices" aria-label="Login choices">
+        <a class="login-link" href="#" role="link">Login as Doctor</a>
+        <a class="login-link" href="#" role="link">Login as Gamer</a>
+    </nav>
+</main>
+
+<section id="about" class="section reveal" aria-label="About us section">
+    <h2>About Us</h2>
+    <p>
+        rehabbo is a physiotherapy gamification platform that helps patients stay motivated and consistent.
+        We combine simple game mechanics with rehab tracking to make home exercises feel easier and more engaging.
+    </p>
+</section>
+
+<section id="contact" class="section reveal" aria-label="Contact us section">
+    <h2>Contact Us</h2>
+    <p>
+        Reach out to us for partnerships, onboarding clinics, or support. We’ll get back to you as soon as possible.
+    </p>
+</section>
+
+<script>
+(() => {
+  const targets = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window) || targets.length === 0) {
+    targets.forEach((el) => el.classList.add('is-visible'));
+  } else {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+          }
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    targets.forEach((el) => io.observe(el));
+  }
+
+  // Parallax background: shapes move as you scroll
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if (reduceMotion) return;
+
+  const shapes = Array.from(document.querySelectorAll('.wrapper .shape'));
+  if (shapes.length === 0) return;
+
+  // Assign subtle speeds (small = slower movement)
+  const speeds = [0.06, 0.09, 0.05, 0.08, 0.07, 0.04, 0.06, 0.05, 0.08, 0.06, 0.04, 0.07, 0.05, 0.09, 0.06, 0.04, 0.07, 0.05, 0.08];
+  shapes.forEach((el, idx) => {
+    el.dataset.speed = String(speeds[idx % speeds.length]);
+  });
+
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const y = window.scrollY || 0;
+    for (const el of shapes) {
+      const s = Number(el.dataset.speed || '0.06');
+      el.style.transform = `translate3d(0, ${Math.round(y * s)}px, 0)`;
+    }
+  };
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  update();
+})();
+</script>
 
 </body>
 </html>
