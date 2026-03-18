@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Shapes Layout</title>
+
+<style>
+body {
+    margin: 0;
+    background: #ffffff;
+    overflow-x: hidden; /* يمنع ظهور الشريط الأفقي */
+}
+
+/* الحاوية العامة: عمود يسار + صف + عمود يمين */
+.wrapper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
+}
+
+/* الصف الأفقي */
+.container {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+/* الأعمدة الجانبية */
+.column {
+    display: flex;
+    flex-direction: column;;
+    gap: 25px;
+}
+
+/* الشكل العام */
+.shape {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* .column .shape {
+    transform: rotate(90deg);
+} */
+ 
+/* الأشكال */
+
+/* الأصفر */
+.s1 {
+    width: 400px;
+    height: 240px;
+    background: #ffcc00;
+    border-radius: 75px;
+}
+
+/* البنفسجي */
+.s2 {
+    width: 175px;
+    height: 240px;
+    background: #bc84ce;
+    border-radius: 30px;
+}
+
+/* البرتقالي */
+.s3 {
+    width: 280px;
+    height: 240px;
+    background: #de7f4f;
+    border-radius: 45%;
+}
+
+/* البيج */
+.s4 {
+    width: 175px;
+    height: 240px;
+    background: #ddc7ab;
+    border-radius: 30px;
+}
+
+/* الوردي */
+.s5 {
+    width: 280px;
+    height: 240px;
+    background: #eca4be;
+    border-radius: 45%;
+}
+
+/* الأزرق */
+.s6 {
+    width: 175px;
+    height: 240px;
+    background: #7ad8d6;
+    border-radius: 50px;
+}
+
+/* الأخضر */
+.s7 {
+    width: 360px;
+    height: 240px;
+    background: #c7e11a;
+    border-radius: 30px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+    <!-- العمود الجديد على اليسار -->
+    <div class="column">
+        <div class="shape s1"></div>
+        <div class="shape s2"></div>
+        <div class="shape s3"></div>
+        <div class="shape s4"></div>
+        <div class="shape s5"></div>
+        <div class="shape s6"></div>
+        <div class="shape s7"></div>
+    </div>
+
+    <!-- الصف الأفقي في المنتصف -->
+    <div class="container">
+        <div class="shape s2"></div>
+        <div class="shape s3"></div>
+        <div class="shape s4"></div>
+        <div class="shape s5"></div>
+        <div class="shape s6"></div>
+    </div>
+
+    <!-- العمود الموجود سابقًا على اليمين -->
+    <div class="column">
+        <div class="shape s7"></div>
+        <div class="shape s6"></div>
+        <div class="shape s5"></div>
+        <div class="shape s4"></div>
+        <div class="shape s3"></div>
+        <div class="shape s2"></div>
+        <div class="shape s1"></div>
+    </div>
+
+</div>
+
+</body>
+</html>
