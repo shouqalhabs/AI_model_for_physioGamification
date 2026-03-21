@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
@@ -14,24 +15,33 @@ html {
     scroll-behavior: smooth;
 }
 
+:root {
+    --header-height: 52px;
+}
+
 body {
     margin: 0;
     background: #ffffff;
     overflow-x: hidden;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color: #111827;
+    position: relative;
+    padding-top: var(--header-height);
 }
 
 /* Header */
 .header {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 14px 18px;
+    min-height: var(--header-height);
+    padding: 6px 18px;
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(17, 24, 39, 0.08);
@@ -78,8 +88,10 @@ body {
 
 /* الحاوية العامة: عمود يسار + صف + عمود يمين */
 .wrapper {
-    position: fixed;
-    inset: 0;
+    position: absolute;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
     z-index: -1;
     pointer-events: none;
     display: flex;
@@ -94,6 +106,13 @@ body {
     display: flex;
     align-items: center;
     gap: 25px;
+}
+
+.middle-frame {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: calc((7 * 240px) + (6 * 25px));
     margin-top: 8px;
 }
 
@@ -185,6 +204,9 @@ body {
     .wrapper { padding: 14px 14px; gap: 18px; }
     .container { gap: 16px; }
     .column { gap: 16px; }
+    .middle-frame {
+        min-height: calc((7 * 200px) + (6 * 16px));
+    }
 }
 
 /* Foreground content */
@@ -202,7 +224,7 @@ body {
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 34px;
+    gap: clamp(64px, 10vw, 160px);
 }
 
 .login-link {
@@ -214,6 +236,24 @@ body {
     border-bottom: 3px solid transparent;
     padding-bottom: 6px;
     line-height: 1.1;
+}
+
+.gamer-link-wrap {
+    position: relative;
+    display: inline-flex;
+    overflow: visible;
+}
+
+.gamer-icon {
+    position: absolute;
+    width: clamp(68px, 7vw, 96px);
+    height: auto;
+    right: clamp(-26px, -2.4vw, -12px);
+    top: clamp(-30px, -3vw, -16px);
+    transform: rotate(14deg);
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
 }
 
 .login-link:hover,
@@ -284,13 +324,22 @@ body {
         <div class="shape s7"></div>
     </div>
 
-    <!-- الصف الأفقي في المنتصف -->
-    <div class="container">
-        <div class="shape s2"></div>
-        <div class="shape s3"></div>
-        <div class="shape s4"></div>
-        <div class="shape s5"></div>
-        <div class="shape s6"></div>
+    <!-- الصفوف الأفقية في المنتصف (أعلى وأسفل) -->
+    <div class="middle-frame">
+        <div class="container">
+            <div class="shape s2"></div>
+            <div class="shape s3"></div>
+            <div class="shape s4"></div>
+            <div class="shape s5"></div>
+            <div class="shape s6"></div>
+        </div>
+        <div class="container">
+            <div class="shape s2"></div>
+            <div class="shape s3"></div>
+            <div class="shape s4"></div>
+            <div class="shape s5"></div>
+            <div class="shape s6"></div>
+        </div>
     </div>
 
     <!-- العمود الموجود سابقًا على اليمين -->
@@ -309,7 +358,16 @@ body {
 <main class="content">
     <nav class="login-choices" aria-label="Login choices">
         <a class="login-link" href="#" role="link">Login as Doctor</a>
-        <a class="login-link" href="#" role="link">Login as Gamer</a>
+        <span class="gamer-link-wrap">
+            <a class="login-link" href="#" role="link">Login as Gamer</a>
+            <img
+                class="gamer-icon"
+                src="{% static 'core/images/child_icon.png' %}"
+                data-fallback-src="/static/core/images/child_icon.png"
+                alt=""
+                aria-hidden="true"
+            />
+        </span>
     </nav>
 </main>
 
@@ -347,6 +405,17 @@ body {
     );
 
     targets.forEach((el) => io.observe(el));
+  }
+
+  // Robust icon fallback in case static path differs by environment
+  const gamerIcon = document.querySelector('.gamer-icon');
+  if (gamerIcon) {
+    gamerIcon.addEventListener('error', () => {
+      const fallback = gamerIcon.getAttribute('data-fallback-src');
+      if (fallback && gamerIcon.src !== fallback) {
+        gamerIcon.src = fallback;
+      }
+    }, { once: true });
   }
 
   // Parallax background: shapes move as you scroll
