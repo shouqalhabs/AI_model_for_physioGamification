@@ -7,6 +7,9 @@ class PoseTracker:
         self.max_shoulder = 0
         self.max_elbow = 0
 
+        self.current_shoulder = 0   # ✅ NEW
+        self.current_elbow = 0      # ✅ NEW
+
         self.prev_left_elbow = None
         self.prev_right_elbow = None
         self.prev_left_shoulder = None
@@ -22,6 +25,9 @@ class PoseTracker:
 
         self.prev_left_shoulder = shoulder_angle
         self.prev_left_elbow = elbow_angle
+
+        self.current_shoulder = shoulder_angle   # ✅ NEW
+        self.current_elbow = elbow_angle         # ✅ NEW
 
         if shoulder_angle > self.max_shoulder:
             self.max_shoulder = shoulder_angle
@@ -46,6 +52,9 @@ class PoseTracker:
         self.prev_right_shoulder = shoulder_angle
         self.prev_right_elbow = elbow_angle
 
+        self.current_shoulder = shoulder_angle   # ✅ NEW
+        self.current_elbow = elbow_angle         # ✅ NEW
+        
         if shoulder_angle > self.max_shoulder:
             self.max_shoulder = shoulder_angle
 

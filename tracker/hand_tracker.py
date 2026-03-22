@@ -6,6 +6,9 @@ class HandTracker:
     def __init__(self):
         self.max_grip = 0
 
+        self.current_hand_landmarks = None   # ✅ NEW
+        self.current_grip = 0                # ✅ NEW
+
         self.HAND_CONNECTIONS = [
         (0,1),(1,2),(2,3),(3,4),
         (0,5),(5,6),(6,7),(7,8),
@@ -43,6 +46,8 @@ class HandTracker:
                 if hand_label != hand_type:
                     continue
 
+                self.current_hand_landmarks = hand_landmarks  # ✅ NEW
+
                 self.draw_connections(frame, hand_landmarks, w, h)
 
                 index_angle = AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[5], hand_landmarks[8], w, h)
@@ -55,6 +60,8 @@ class HandTracker:
                 open_percentage = int(((avg_angle - 60) / (180 - 60)) * 100)
                 open_percentage = max(0, min(100, open_percentage))
                 closed_percentage = 100 - open_percentage
+
+                self.current_grip = closed_percentage  # ✅ NEW
 
                 if closed_percentage > self.max_grip:
                     self.max_grip = closed_percentage

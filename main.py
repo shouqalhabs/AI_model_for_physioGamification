@@ -11,6 +11,9 @@ from tracker.hand_tracker import HandTracker
 from tracker.combined_tracker import CombinedTracker
 from assessment.initial_assessment import InitialAssessment
 
+from games.game_logic import CatchGame
+from games.game_session import GameSession
+
 POSE_MODEL_PATH = "pose_landmarker_full.task"
 HAND_MODEL_PATH = "hand_landmarker.task"
 
@@ -37,11 +40,18 @@ db = DatabaseManager()
 pose_tracker = PoseTracker()
 hand_tracker = HandTracker()
 combined = CombinedTracker(pose_tracker, hand_tracker)
-assessment = InitialAssessment(db, pose_tracker, hand_tracker)
+# assessment = InitialAssessment(db, pose_tracker, hand_tracker)
+
+session = GameSession(db.SDB_PATH)  # Initialize game session with database path
 
 USER_ID = 1
 
 affected_arm = db.get_affected_arm(USER_ID) # takes left or right as values
+
+ret, frame = cap.read()
+h, w, _ = frame.shape
+
+game = CatchGame(w, h)
 
 with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker, \
      vision.HandLandmarker.create_from_options(hand_options) as hand_landmarker:
@@ -61,7 +71,21 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
         combined.run(frame, w, h, mp_image, timestamp_ms,
                      hand_landmarker, pose_landmarker, affected_arm)
 
-        cv2.imshow("Physio Assessment", frame)
+        # cv2.imshow("Physio Assessment", frame)
+
+        game.update_basket(hand_tracker.current_hand_landmarks, w)
+        game.update_object()
+        game.check_catch()
+        game.draw(frame)
+
+        session.add_data(
+            pose_tracker.current_shoulder,
+            pose_tracker.current_elbow,
+            hand_tracker.current_grip,
+            pose_tracker.current_shoulder  # external rotation approx
+        )
+
+        cv2.imshow("Rehab Game", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -69,4 +93,5 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
 cap.release()
 cv2.destroyAllWindows()
 
-assessment.save()
+# assessment.save()
+session.save(USER_ID)
