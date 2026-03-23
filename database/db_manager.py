@@ -56,7 +56,7 @@ class DatabaseManager:
         conn.close()
     # submit game session data to database for given user_id in game_sessions table
 
-    def update_strengths(self, user_id, shoulder, elbow, thumb, index, middle, ring, pinky):
+    def update_strengths(self, user_id, shoulder, elbow, wrist, thumb, index, middle, ring, pinky):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
 
@@ -64,14 +64,15 @@ class DatabaseManager:
             UPDATE patients
             SET 
                 shoulder_strength=?,
-                elbow_strength=?, 
+                elbow_strength=?,
+                wrist_strength=?, 
                 max_thumb=?,
                 max_index=?,
                 max_middle=?,
                 max_ring=?,
                 max_pinky=?
             WHERE user_id=?
-        """, (shoulder, elbow, thumb, index, middle, ring, pinky, user_id))
+        """, (shoulder, elbow, wrist, thumb, index, middle, ring, pinky, user_id))
 
         conn.commit()
         conn.close()

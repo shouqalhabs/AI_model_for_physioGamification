@@ -11,8 +11,9 @@ class InitialAssessment:
 
         self.db.update_strengths(
             self.user_id,
-            int(self.pose_tracker.max_shoulder),
-            int(self.pose_tracker.max_elbow),
+            int(self.pose_tracker.rom_max["shoulder"]),
+            int(self.pose_tracker.rom_max["elbow"]),
+            int(self.pose_tracker.rom_max["wrist"]),
             int(self.hand_tracker.max_finger_angles["thumb"]),
             int(self.hand_tracker.max_finger_angles["index"]),
             int(self.hand_tracker.max_finger_angles["middle"]),
@@ -21,8 +22,9 @@ class InitialAssessment:
         )
 
         print("Saved to database")
-        print("Shoulder:", self.pose_tracker.max_shoulder)
-        print("Elbow:", self.pose_tracker.max_elbow)
+        print("Shoulder:", self.pose_tracker.rom_max["shoulder"])
+        print("Elbow:", self.pose_tracker.rom_max["elbow"])
+        print("Wrist:", self.pose_tracker.rom_max["wrist"])
         print("Thumb:", self.hand_tracker.max_finger_angles["thumb"])
         print("Index:", self.hand_tracker.max_finger_angles["index"])
         print("Middle:", self.hand_tracker.max_finger_angles["middle"])
