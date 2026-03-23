@@ -4,11 +4,26 @@ from utils.angle_math import AngleMath
 class HandTracker:
 
     def __init__(self):
-        self.max_grip = 0
 
-        self.current_hand_landmarks = None   # ✅ NEW
-        self.current_grip = 0                # ✅ NEW
+        self.current_hand_landmarks = None
+        self.current_grip = 0     
 
+        self.finger_angles = {
+            "thumb":  None,
+            "index":  None,
+            "middle": None,
+            "ring":   None,
+            "pinky":  None
+        } ## none cuz we didn't calculate them yet, in db should be none not 0, to distinguish between not calculated and fully extended, later we change with baseline values for each patient
+
+        self.max_finger_angles = {
+            "thumb": 0,
+            "index": 0,
+            "middle": 0,
+            "ring": 0,
+            "pinky": 0
+        }
+        
         self.HAND_CONNECTIONS = [
         (0,1),(1,2),(2,3),(3,4),
         (0,5),(5,6),(6,7),(7,8),
@@ -17,7 +32,7 @@ class HandTracker:
         (0,17),(17,18),(18,19),(19,20)
         ]
 
-    def draw_connections(self, frame, landmarks, w, h):
+    def draw_connections(self, frame, landmarks, w, h): ## to be removed when launching the game, only for debugging
         for start_idx, end_idx in self.HAND_CONNECTIONS:
 
             start = landmarks[start_idx]
@@ -46,30 +61,44 @@ class HandTracker:
                 if hand_label != hand_type:
                     continue
 
-                self.current_hand_landmarks = hand_landmarks  # ✅ NEW
+                self.current_hand_landmarks = hand_landmarks  
 
-                self.draw_connections(frame, hand_landmarks, w, h)
+                self.draw_connections(frame, hand_landmarks, w, h) ## to be removed when launching the game, only for debugging
 
-                index_angle = AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[5], hand_landmarks[8], w, h)
-                middle_angle = AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[9], hand_landmarks[12], w, h)
-                ring_angle = AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[13], hand_landmarks[16], w, h)
-                pinky_angle = AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[17], hand_landmarks[20], w, h)
+                raw_angles = {
+                "thumb":  AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[1], hand_landmarks[4]),
+                "index":  AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[5], hand_landmarks[8]),
+                "middle": AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[9], hand_landmarks[12]),
+                "ring":   AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[13], hand_landmarks[16]),
+                "pinky":  AngleMath.calculate_angle(hand_landmarks[0], hand_landmarks[17], hand_landmarks[20])
+                }
 
-                avg_angle = (index_angle + middle_angle + ring_angle + pinky_angle) / 4
+                # تنعيم + إزالة spikes لكل إصبع
+                for finger, current_angle in raw_angles.items():
 
-                open_percentage = int(((avg_angle - 60) / (180 - 60)) * 100)
-                open_percentage = max(0, min(100, open_percentage))
-                closed_percentage = 100 - open_percentage
+                    prev_angle = self.finger_angles[finger]
 
-                self.current_grip = closed_percentage  # ✅ NEW
+                    # إزالة القفزات المفاجئة
+                    cleaned = AngleMath.remove_spikes(prev_angle, current_angle)
 
-                if closed_percentage > self.max_grip:
-                    self.max_grip = closed_percentage
+                    # حساب سرعة التغير
+                    velocity = 0 if prev_angle is None else abs(cleaned - prev_angle)
 
-                text_x = 30 if hand_type == 'left' else w-200
+                    # تنعيم الزاوية
+                    smoothed = AngleMath.smooth_angle(prev_angle, cleaned, velocity)
 
-                cv2.putText(frame,f"Open: {open_percentage}%",(text_x,120),
-                cv2.FONT_HERSHEY_SIMPLEX,0.9,(0,255,0),2)
+                    # حفظ النتيجة
+                    self.finger_angles[finger] = smoothed
 
-                cv2.putText(frame,f"Closed: {closed_percentage}%",(text_x,160),
-                cv2.FONT_HERSHEY_SIMPLEX,0.9,(0,0,255),2)
+                for finger, angle in self.finger_angles.items():
+                    if angle is not None:
+                        self.max_finger_angles[finger] = max(self.max_finger_angles[finger], angle)
+
+                # عرض الزوايا (للتقييم)
+                y = 120
+                for finger, angle in self.finger_angles.items():
+                    if angle is not None:
+                        cv2.putText(frame, f"{finger}: {int(angle)}°", (30, y),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2)
+                    y += 30
+                

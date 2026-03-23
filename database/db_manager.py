@@ -5,8 +5,6 @@ SDB_PATH = "C:\\Users\\sh210\\aiphysio\\AI_model_for_physioGamification\\rehab.d
 
 class DatabaseManager:
 
-    SDB_PATH = "C:\\Users\\sh210\\aiphysio\\AI_model_for_physioGamification\\rehab.db"
-
     def get_affected_arm(self, user_id):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
@@ -42,6 +40,7 @@ class DatabaseManager:
                 "elbow": 0,
                 "grip": 0
             }
+    # fetch shoulder, elbow and grip strength for given user_id from database from patients table to be used as refrence
 
     def submit_game_session(self, user_id, shoulder, elbow, grip, rotation):
         conn = sqlite3.connect(SDB_PATH)
@@ -55,8 +54,9 @@ class DatabaseManager:
 
         conn.commit()
         conn.close()
+    # submit game session data to database for given user_id in game_sessions table
 
-    def update_strengths(self, user_id, shoulder, elbow, grip):
+    def update_strengths(self, user_id, shoulder, elbow, thumb, index, middle, ring, pinky):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
 
@@ -65,9 +65,13 @@ class DatabaseManager:
             SET 
                 shoulder_strength=?,
                 elbow_strength=?, 
-                grip_strength=?
+                max_thumb=?,
+                max_index=?,
+                max_middle=?,
+                max_ring=?,
+                max_pinky=?
             WHERE user_id=?
-        """, (shoulder, elbow, grip, user_id))
+        """, (shoulder, elbow, thumb, index, middle, ring, pinky, user_id))
 
         conn.commit()
         conn.close()

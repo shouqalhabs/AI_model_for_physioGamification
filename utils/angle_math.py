@@ -1,27 +1,63 @@
 import numpy as np
+import math
 
 class AngleMath:
 
     @staticmethod
-    def smooth_angle(previous, current, alpha=0.7):
-        if previous is None:
-            return current
-        return alpha * previous + (1 - alpha) * current
+    def calculate_angle(a, b, c):
+        # Extract normalized 3D coordinates
+        ax, ay, az = a.x, a.y, a.z
+        bx, by, bz = b.x, b.y, b.z
+        cx, cy, cz = c.x, c.y, c.z
+
+        # Create vectors AB and CB
+        ab = (ax - bx, ay - by, az - bz)
+        cb = (cx - bx, cy - by, cz - bz)
+
+        # Dot product
+        dot = ab[0]*cb[0] + ab[1]*cb[1] + ab[2]*cb[2]
+
+        # Magnitudes
+        mag_ab = math.sqrt(ab[0]**2 + ab[1]**2 + ab[2]**2)
+        mag_cb = math.sqrt(cb[0]**2 + cb[1]**2 + cb[2]**2)
+
+        # Avoid division by zero
+        if mag_ab == 0 or mag_cb == 0:
+            return 0.0
+
+        # Clamp to avoid domain errors
+        cos_angle = max(-1.0, min(1.0, dot / (mag_ab * mag_cb)))
+
+        # Convert to degrees
+        return math.degrees(math.acos(cos_angle))
 
     @staticmethod
-    def calculate_angle(a, b, c, w, h):
-        a = np.array([a.x * w, a.y * h])
-        b = np.array([b.x * w, b.y * h])
-        c = np.array([c.x * w, c.y * h])
+    def smooth_angle(prev, current, velocity, base_alpha=0.7):
+        # First frame
+        if prev is None:
+            return current
 
-        ba = a - b
-        bc = c - b
+        # Adaptive smoothing
+        if velocity > 15:
+            alpha = 0.5
+        else:
+            alpha = base_alpha
 
-        cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-        cosine_angle = np.clip(cosine_angle, -1.0, 1.0)
+        # Exponential smoothing
+        return alpha * prev + (1 - alpha) * current
 
-        angle = np.arccos(cosine_angle)
-        return np.degrees(angle)
+    @staticmethod
+    def remove_spikes(prev, current, threshold=40):
+        # First frame
+        if prev is None:
+            return current
+
+        # If jump is too large → treat as noise
+        if abs(current - prev) > threshold:
+            return prev
+
+        return current
+
 
     @staticmethod
     def calculate_elbow_angle(shoulder, elbow, wrist, w, h):

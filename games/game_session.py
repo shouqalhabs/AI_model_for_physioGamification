@@ -1,10 +1,6 @@
-import sqlite3
-
 class GameSession:
 
-    def __init__(self, db_path):
-        self.db_path = db_path
-
+    def __init__(self):
         self.shoulder_values = []
         self.elbow_values = []
         self.grip_values = []
@@ -17,28 +13,12 @@ class GameSession:
         self.rotation_values.append(rotation)
 
     def average(self, arr):
-        if len(arr) == 0:
-            return 0
-        return sum(arr) / len(arr)
+        return sum(arr) / len(arr) if arr else 0
 
-    def save(self, patient_id):
-
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            INSERT INTO game_sessions 
-            (patient_id, shoulder_activation, elbow_activation, grip_activation, external_rotation)
-            VALUES (?, ?, ?, ?, ?)
-        """, (
-            patient_id,
-            int(self.average(self.shoulder_values)),
-            int(self.average(self.elbow_values)),
-            int(self.average(self.grip_values)),
-            int(self.average(self.rotation_values))
-        ))
-
-        conn.commit()
-        conn.close()
-
-        print("✅ Game session saved")
+    def get_averages(self):
+        return {
+            "shoulder": int(self.average(self.shoulder_values)),
+            "elbow": int(self.average(self.elbow_values)),
+            "grip": int(self.average(self.grip_values)),
+            "rotation": int(self.average(self.rotation_values))
+        }

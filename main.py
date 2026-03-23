@@ -35,16 +35,17 @@ hand_options = vision.HandLandmarkerOptions(
 cap = cv2.VideoCapture(0)
 start_time = time.time()
 
+USER_ID = 1
+
 # INIT CLASSES
 db = DatabaseManager()
 pose_tracker = PoseTracker()
 hand_tracker = HandTracker()
 combined = CombinedTracker(pose_tracker, hand_tracker)
-# assessment = InitialAssessment(db, pose_tracker, hand_tracker)
+assessment = InitialAssessment(db, pose_tracker, hand_tracker,USER_ID)
 
-session = GameSession(db.SDB_PATH)  # Initialize game session with database path
+# session = GameSession()
 
-USER_ID = 1
 
 affected_arm = db.get_affected_arm(USER_ID) # takes left or right as values
 
@@ -71,27 +72,43 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
         combined.run(frame, w, h, mp_image, timestamp_ms,
                      hand_landmarker, pose_landmarker, affected_arm)
 
-        # cv2.imshow("Physio Assessment", frame)
+        cv2.imshow("Physio Assessment", frame)
 
-        game.update_basket(hand_tracker.current_hand_landmarks, w)
-        game.update_object()
-        game.check_catch()
-        game.draw(frame)
+        
+        #game.update_basket(
+        #    hand_tracker.current_hand_landmarks,
+        #    combined.pose_landmarks,  # لازم تتأكد إنها محفوظة
+        #    w, h,
+        #    frame
+        #)
+        #game.update_object()
+        #game.check_catch()
+        #game.draw(frame)
 
-        session.add_data(
-            pose_tracker.current_shoulder,
-            pose_tracker.current_elbow,
-            hand_tracker.current_grip,
-            pose_tracker.current_shoulder  # external rotation approx
-        )
+        #session.add_data(
+        #    pose_tracker.current_shoulder,
+        #    pose_tracker.current_elbow,
+        #    hand_tracker.current_grip,
+        #    pose_tracker.current_shoulder  # external rotation approx
+        #)
 
-        cv2.imshow("Rehab Game", frame)
+        #cv2.imshow("Rehab Game", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        
+
+#averages = session.get_averages()
+
+#db.submit_game_session(
+#    USER_ID,
+#    averages["shoulder"],
+#    averages["elbow"],
+#    averages["grip"],
+#    averages["rotation"]
+#)
+
 cap.release()
 cv2.destroyAllWindows()
 
-# assessment.save()
-session.save(USER_ID)
+assessment.save()
+# session.save(USER_ID)

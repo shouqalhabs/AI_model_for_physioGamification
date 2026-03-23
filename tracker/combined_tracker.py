@@ -3,6 +3,7 @@ class CombinedTracker:
     def __init__(self, pose_tracker, hand_tracker):
         self.pose_tracker = pose_tracker
         self.hand_tracker = hand_tracker
+        self.pose_landmarks = None
 
     def run(self, frame, w, h, mp_image, timestamp_ms,
             hand_landmarker, pose_landmarker, injured_hand):
@@ -13,15 +14,16 @@ class CombinedTracker:
         pose_result = pose_landmarker.detect_for_video(mp_image, timestamp_ms)
 
         if pose_result.pose_landmarks:
+            self.pose_landmarks = pose_result.pose_landmarks[0]
 
-            landmarks = pose_result.pose_landmarks[0]
+            valid = self.pose_tracker.process(
+                frame,
+                self.pose_landmarks,
+                w,
+                h,
+                side=injured_hand
+            )
 
-            if injured_hand == 'left':
-                self.pose_tracker.process_left_side(frame, landmarks, w, h)
-            else:
-                self.pose_tracker.process_right_side(frame, landmarks, w, h)
-        #print("DEBUG VALUES:")
-        #print("Shoulder:", self.pose_tracker.max_shoulder)
-        #print("Elbow:", self.pose_tracker.max_elbow)
-        #print("Grip:", self.hand_tracker.max_grip)
-        #problem: sholder and elbow captures gosts angles!!
+            return valid
+
+        return False
