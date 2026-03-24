@@ -21,7 +21,7 @@ class DatabaseManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT shoulder_strength, elbow_strength, grip_strength
+            SELECT shoulder_strength, elbow_strength, wrist_strength, max_thumb, max_index, max_middle, max_ring, max_pinky
             FROM patients
             WHERE user_id = ?
         """, (user_id,))
@@ -32,25 +32,35 @@ class DatabaseManager:
             return {
                 "shoulder": result[0],
                 "elbow": result[1],
-                "grip": result[2]
+                "wrist": result[2],
+                "max_thumb": result[3],
+                "max_index": result[4],
+                "max_middle": result[5],
+                "max_ring": result[6],
+                "max_pinky": result[7]
             }
         else:
             return {
                 "shoulder": 0,
                 "elbow": 0,
-                "grip": 0
+                "wrist": 0,
+                "max_thumb": 0,
+                "max_index": 0,
+                "max_middle": 0,
+                "max_ring": 0,
+                "max_pinky": 0
             }
-    # fetch shoulder, elbow and grip strength for given user_id from database from patients table to be used as refrence
+    # fetch strength for given user_id from database from patients table to be used as refrence
 
-    def submit_game_session(self, user_id, shoulder, elbow, grip, rotation):
+    def submit_game_session(self, user_id, shoulder, elbow, wrist, rotation):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
 
         cursor.execute("""
             INSERT INTO game_sessions 
-            (patient_id, shoulder_activation, elbow_activation, grip_activation, external_rotation)
+            (patient_id, shoulder_activation, elbow_activation, wrist_activation, external_rotation)
             VALUES (?, ?, ?, ?, ?)
-        """, (user_id, shoulder, elbow, grip, rotation))
+        """, (user_id, shoulder, elbow, wrist, rotation))
 
         conn.commit()
         conn.close()

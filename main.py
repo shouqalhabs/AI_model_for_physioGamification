@@ -42,9 +42,9 @@ db = DatabaseManager()
 pose_tracker = PoseTracker()
 hand_tracker = HandTracker()
 combined = CombinedTracker(pose_tracker, hand_tracker)
-assessment = InitialAssessment(db, pose_tracker, hand_tracker,USER_ID)
+# assessment = InitialAssessment(db, pose_tracker, hand_tracker,USER_ID)
 
-# session = GameSession()
+session = GameSession()
 
 
 affected_arm = db.get_affected_arm(USER_ID) # takes left or right as values
@@ -52,7 +52,7 @@ affected_arm = db.get_affected_arm(USER_ID) # takes left or right as values
 ret, frame = cap.read()
 h, w, _ = frame.shape
 
-game = CatchGame(w, h)
+game1 = CatchGame(w, h, side=affected_arm, session=session)
 
 with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker, \
      vision.HandLandmarker.create_from_options(hand_options) as hand_landmarker:
@@ -72,18 +72,19 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
         combined.run(frame, w, h, mp_image, timestamp_ms,
                      hand_landmarker, pose_landmarker, affected_arm)
 
-        cv2.imshow("Physio Assessment", frame)
+        # cv2.imshow("Physio Assessment", frame)
 
         
-        #game.update_basket(
-        #    hand_tracker.current_hand_landmarks,
-        #    combined.pose_landmarks,  # لازم تتأكد إنها محفوظة
-        #    w, h,
-        #    frame
-        #)
-        #game.update_object()
-        #game.check_catch()
-        #game.draw(frame)
+        game1.update_basket(
+            combined,
+            w, h,
+            frame,
+            db,
+            USER_ID
+        )
+        game1.update_object()
+        game1.check_catch()
+        game1.draw(frame)
 
         #session.add_data(
         #    pose_tracker.current_shoulder,
@@ -92,7 +93,7 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
         #    pose_tracker.current_shoulder  # external rotation approx
         #)
 
-        #cv2.imshow("Rehab Game", frame)
+        cv2.imshow("eggs Game", frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -110,5 +111,6 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
 cap.release()
 cv2.destroyAllWindows()
 
-assessment.save()
-# session.save(USER_ID)
+# assessment.save()
+summary = session.get_summary()
+print("Session summary:", summary)
