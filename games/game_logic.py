@@ -33,7 +33,7 @@ class CatchGame:
         # رينج الكوع الافتراضي (يمكن استبداله من DB عند بدء الجلسة)
         self.elbow_min = elbow_min if elbow_min is not None else 60.0
         self.elbow_max = 180
-
+        # elbow range calculation is wrong, better to be between the elbow strength not 180 to his/her best
         # حساسية منع التعويض
         self.shoulder_move_threshold = shoulder_move_threshold
         self.hip_move_threshold = hip_move_threshold
@@ -125,6 +125,7 @@ class CatchGame:
             rotation_value = getattr(hand_tracker, "rotation_value")
         elif hand_tracker.current_hand_landmarks is not None and pose_landmarks is not None:
             # حساب بسيط كنقطة احتياط: فرق X بين رسغ اليد وكتف الجسم (normalized)
+            # in the initial assessment sholder rotation need to be deducted. also need to be added to the database.
             try:
                 # wrist from hand landmarks (index 0) و shoulder from pose_landmarks
                 wrist_lm = hand_tracker.current_hand_landmarks[0]
@@ -140,6 +141,8 @@ class CatchGame:
                 rotation_value = 0.5
         else:
             rotation_value = 0.5
+        # these values needs to be more precise and get the sholder external and internal rotaion. also need to be added to the database.
+        # this rotation calculation algorithm is very basic and needs to be improved by using the wrist and shoulder landmarks to calculate the actual rotation of the arm, also need to be calibrated for each patient in the initial assessment and saved in the database for better accuracy during the game sessions.
 
         # مواقع بكسل للكتف والورك (لاحتساب الحركة)
         if pose_landmarks is None:
@@ -227,3 +230,4 @@ class CatchGame:
                 elbow_angle=elbow_angle if elbow_angle is not None else 0,
                 rotation_value=rotation_value
             )
+            # either here on in session. data need to be exported to the database.
