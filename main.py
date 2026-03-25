@@ -112,5 +112,4 @@ cap.release()
 cv2.destroyAllWindows()
 
 # assessment.save()
-summary = session.get_summary()
-print("Session summary:", summary)
+session.submit(USER_ID)

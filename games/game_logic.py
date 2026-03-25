@@ -227,7 +227,14 @@ class CatchGame:
         if self.session is not None:
             self.session.add_data(
                 shoulder_angle=shoulder_angle if shoulder_angle is not None else 0,
+                shoulder_external_rotation= rotation_value if rotation_value is not None else 0,
+                shoulder_internal_rotation=0,
                 elbow_angle=elbow_angle if elbow_angle is not None else 0,
-                rotation_value=rotation_value
+                wrist_angle= 0,
+                max_thumb=0,
+                max_index=0,
+                max_middle=0,
+                max_ring=0,
+                max_pinky=0
             )
             # either here on in session. data need to be exported to the database.

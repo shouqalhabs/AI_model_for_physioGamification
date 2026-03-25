@@ -56,19 +56,41 @@ class DatabaseManager:
             }
     # fetch strength for given user_id from database from patients table to be used as refrence
 
-    def submit_game_session(self, user_id, shoulder_activation, shoulder_shrug, shoulder_external_rotation, shoulder_internal_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky):
+    def submit_game_session(self, user_id, shoulder_activation, shoulder_external_rotation, shoulder_internal_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
 
         cursor.execute("""
-            INSERT INTO game_sessions 
-            (shoulder_activation, shoulder_shrug, sholder_ext_rotation, sholder_int_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            WHERE patient_id = user_id
-        """, (user_id, shoulder_activation, shoulder_shrug, shoulder_external_rotation, shoulder_internal_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky))
+            UPDATE game_sessions
+            SET 
+                shoulder_activation = ?,
+                sholder_ext_rotation = ?,
+                sholder_int_rotation = ?,
+                elbow_activation = ?,
+                wrist_activation = ?,
+                max_thumb = ?,
+                max_index = ?,
+                max_middle = ?,
+                max_ring = ?,
+                max_pinky = ?
+            WHERE patient_id = ?
+        """, (
+            shoulder_activation,
+            shoulder_external_rotation,
+            shoulder_internal_rotation,
+            elbow_activation,
+            wrist_activation,
+            max_thumb,
+            max_index,
+            max_middle,
+            max_ring,
+            max_pinky,
+            user_id
+        ))
 
         conn.commit()
         conn.close()
+
     # submit game session data to database for given user_id in game_sessions table
 
     def update_strengths(self, user_id, shoulder_strength, shoulder_ext_rotation, shoulder_int_rotation, elbow_strength, wrist_strength, max_thumb, max_index, max_middle, max_ring, max_pinky):
