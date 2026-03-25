@@ -21,7 +21,7 @@ class DatabaseManager:
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT shoulder_strength, elbow_strength, wrist_strength, max_thumb, max_index, max_middle, max_ring, max_pinky
+            SELECT shoulder_strength, elbow_strength, wrist_strength, max_thumb, max_index, max_middle, max_ring, max_pinky, sholder_ext_rotation, sholder_int_rotation
             FROM patients
             WHERE user_id = ?
         """, (user_id,))
@@ -37,7 +37,9 @@ class DatabaseManager:
                 "max_index": result[4],
                 "max_middle": result[5],
                 "max_ring": result[6],
-                "max_pinky": result[7]
+                "max_pinky": result[7],
+                "sholder_ext_rotation": result[8],
+                "sholder_int_rotation": result[9]
             }
         else:
             return {
@@ -48,25 +50,28 @@ class DatabaseManager:
                 "max_index": 0,
                 "max_middle": 0,
                 "max_ring": 0,
-                "max_pinky": 0
+                "max_pinky": 0,
+                "sholder_ext_rotation": 0,
+                "sholder_int_rotation": 0
             }
     # fetch strength for given user_id from database from patients table to be used as refrence
 
-    def submit_game_session(self, user_id, shoulder, elbow, wrist, rotation):
+    def submit_game_session(self, user_id, shoulder_activation, shoulder_shrug, shoulder_external_rotation, shoulder_internal_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
 
         cursor.execute("""
             INSERT INTO game_sessions 
-            (patient_id, shoulder_activation, elbow_activation, wrist_activation, external_rotation)
-            VALUES (?, ?, ?, ?, ?)
-        """, (user_id, shoulder, elbow, wrist, rotation))
+            (shoulder_activation, shoulder_shrug, sholder_ext_rotation, sholder_int_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            WHERE patient_id = user_id
+        """, (user_id, shoulder_activation, shoulder_shrug, shoulder_external_rotation, shoulder_internal_rotation, elbow_activation, wrist_activation, max_thumb, max_index, max_middle, max_ring, max_pinky))
 
         conn.commit()
         conn.close()
     # submit game session data to database for given user_id in game_sessions table
 
-    def update_strengths(self, user_id, shoulder, elbow, wrist, thumb, index, middle, ring, pinky):
+    def update_strengths(self, user_id, shoulder_strength, shoulder_ext_rotation, shoulder_int_rotation, elbow_strength, wrist_strength, max_thumb, max_index, max_middle, max_ring, max_pinky):
         conn = sqlite3.connect(SDB_PATH)
         cursor = conn.cursor()
 
@@ -74,6 +79,8 @@ class DatabaseManager:
             UPDATE patients
             SET 
                 shoulder_strength=?,
+                sholder_ext_rotation=?,
+                sholder_int_rotation=?,
                 elbow_strength=?,
                 wrist_strength=?, 
                 max_thumb=?,
@@ -82,7 +89,7 @@ class DatabaseManager:
                 max_ring=?,
                 max_pinky=?
             WHERE user_id=?
-        """, (shoulder, elbow, wrist, thumb, index, middle, ring, pinky, user_id))
+        """, (shoulder_strength, shoulder_ext_rotation, shoulder_int_rotation, elbow_strength, wrist_strength, max_thumb, max_index, max_middle, max_ring, max_pinky, user_id))
 
         conn.commit()
         conn.close()
