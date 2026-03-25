@@ -123,16 +123,29 @@ class PoseTracker:
                             landmarks[wrist_id].z])
 
         now = time.time()
-
+        remaining = 0
         # 1) ننتظر 5 ثواني قبل بدء المعايرة
         if not self.calibration_started and not self.calibration_done:
-            if now - self.global_start_time >= self.calibration_delay:
+            #if now - self.global_start_time >= self.calibration_delay:
+            remaining = int(self.calibration_delay - (now - self.global_start_time))
+        if remaining > 0:
+            cv2.putText(frame, f"Calibration starts in: {remaining}",
+                        (20, 200), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 3)
+        # لا نبدأ حساب الدوران قبل انتهاء العدّاد
+            return True
+        else:
                 self.calibration_started = True
                 self.calibration_start_time = now
 
         # 2) أثناء المعايرة (لمدة 2 ثانية)
         if self.calibration_started and not self.calibration_done:
-            if now - self.calibration_start_time <= self.calibration_duration:
+            #if now - self.calibration_start_time <= self.calibration_duration:
+            elapsed = now - self.calibration_start_time
+            remaining = int(self.calibration_duration - elapsed)
+
+            if remaining >= 0:
+                cv2.putText(frame, f"Calibrating... {remaining}",
+                        (20, 200), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
                 vec = wrist_xyz - shoulder_xyz
                 self.calibration_samples.append(vec)
             else:
