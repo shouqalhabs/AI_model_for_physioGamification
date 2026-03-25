@@ -6,27 +6,32 @@ class InitialAssessment:
         self.hand_tracker = hand_tracker
         self.user_id = user_id
 
+    
     def save(self):
         print("Saving results...")
 
         self.db.update_strengths(
             self.user_id,
             int(self.pose_tracker.rom_max["shoulder"]),
-            int(self.pose_tracker.rom_max["elbow"]),
+            int(self.pose_tracker.rom_min["elbow"]),
             int(self.pose_tracker.rom_max["wrist"]),
             int(self.hand_tracker.max_finger_angles["thumb"]),
             int(self.hand_tracker.max_finger_angles["index"]),
             int(self.hand_tracker.max_finger_angles["middle"]),
             int(self.hand_tracker.max_finger_angles["ring"]),
-            int(self.hand_tracker.max_finger_angles["pinky"])
+            int(self.hand_tracker.max_finger_angles["pinky"]),
+            int(self.pose_tracker.rom_max["shoulder_external_rotation"]),
+            int(self.pose_tracker.rom_max["shoulder_internal_rotation"])
         )
 
         print("Saved to database")
         print("Shoulder:", self.pose_tracker.rom_max["shoulder"])
-        print("Elbow:", self.pose_tracker.rom_max["elbow"])
+        print("Elbow:", self.pose_tracker.rom_min["elbow"])
         print("Wrist:", self.pose_tracker.rom_max["wrist"])
         print("Thumb:", self.hand_tracker.max_finger_angles["thumb"])
         print("Index:", self.hand_tracker.max_finger_angles["index"])
         print("Middle:", self.hand_tracker.max_finger_angles["middle"])
         print("Ring:", self.hand_tracker.max_finger_angles["ring"])
         print("Pinky:", self.hand_tracker.max_finger_angles["pinky"])
+        print("Shoulder External Rotation:", self.pose_tracker.rom_max["shoulder_external_rotation"])
+        print("Shoulder Internal Rotation:", self.pose_tracker.rom_max["shoulder_internal_rotation"])

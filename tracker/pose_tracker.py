@@ -1,3 +1,5 @@
+import time
+import numpy as np
 import cv2
 from utils.angle_math import AngleMath
 
@@ -8,28 +10,45 @@ class PoseTracker:
         self.prev = {
             "shoulder": None,
             "elbow": None,
-            "wrist": None
+            "wrist": None,
+            "shoulder_external_rotation": None,
+            "shoulder_internal_rotation": None
         }
 
         # Current values
         self.current = {
             "shoulder": 0,
             "elbow": 0,
-            "wrist": 0
+            "wrist": 0,
+            "shoulder_external_rotation": 0,
+            "shoulder_internal_rotation": 0
         }
 
         # Range of Motion tracking
         self.rom_min = {
             "shoulder": 999,
             "elbow": 999,
-            "wrist": 999
+            "wrist": 999,
+            "shoulder_external_rotation": 999,
+            "shoulder_internal_rotation": 999
         }
 
         self.rom_max = {
             "shoulder": 0,
             "elbow": 0,
-            "wrist": 0
+            "wrist": 0,
+            "shoulder_external_rotation": 0,
+            "shoulder_internal_rotation": 0
         }
+        # Calibration
+        self.calibration_started = False
+        self.calibration_done = False
+        self.calibration_start_time = None
+        self.calibration_delay = 5        # ننتظر 5 ثواني قبل البدء
+        self.calibration_duration = 2     # نعاير لمدة ثانيتين
+        self.calibration_samples = []
+        self.ref_vector = None
+        self.global_start_time = time.time()
 
     def is_visible(self, lm, threshold=0.5):
         return lm.visibility > threshold
@@ -91,12 +110,54 @@ class PoseTracker:
             landmarks[elbow_id], landmarks[wrist_id], landmarks[9]  # MCP الوسطى
         )
 
+        
+        # -----------------------------
+        # Calibration (shoulder-wrist baseline)
+        # -----------------------------
+        shoulder_xyz = np.array([landmarks[shoulder_id].x,
+                                landmarks[shoulder_id].y,
+                                landmarks[shoulder_id].z])
+
+        wrist_xyz = np.array([landmarks[wrist_id].x,
+                            landmarks[wrist_id].y,
+                            landmarks[wrist_id].z])
+
+        now = time.time()
+
+        # 1) ننتظر 5 ثواني قبل بدء المعايرة
+        if not self.calibration_started and not self.calibration_done:
+            if now - self.global_start_time >= self.calibration_delay:
+                self.calibration_started = True
+                self.calibration_start_time = now
+
+        # 2) أثناء المعايرة (لمدة 2 ثانية)
+        if self.calibration_started and not self.calibration_done:
+            if now - self.calibration_start_time <= self.calibration_duration:
+                vec = wrist_xyz - shoulder_xyz
+                self.calibration_samples.append(vec)
+            else:
+                # 3) انتهت المعايرة → نحسب المتوسط
+                if len(self.calibration_samples) > 0:
+                    self.ref_vector = np.mean(self.calibration_samples, axis=0)
+                self.calibration_done = True
+                self.calibration_started = False
+
+        shoulder_external_rotation = AngleMath.calculate_external_rotation(
+            shoulder_xyz, wrist_xyz, self.ref_vector
+        )
+
+        shoulder_internal_rotation = AngleMath.calculate_internal_rotation(
+            shoulder_xyz, wrist_xyz, self.ref_vector
+        )
+
         # -----------------------------
         # إزالة القفزات
         # -----------------------------
         shoulder_angle = AngleMath.remove_spikes(self.prev["shoulder"], shoulder_angle)
         elbow_angle = AngleMath.remove_spikes(self.prev["elbow"], elbow_angle)
         wrist_angle = AngleMath.remove_spikes(self.prev["wrist"], wrist_angle)
+        shoulder_external_rotation = AngleMath.remove_spikes(self.prev["shoulder_external_rotation"], shoulder_external_rotation)
+        shoulder_internal_rotation = AngleMath.remove_spikes(self.prev["shoulder_internal_rotation"], shoulder_internal_rotation)
 
         # -----------------------------
         # سرعة التغير
@@ -104,24 +165,28 @@ class PoseTracker:
         vel_s = 0 if self.prev["shoulder"] is None else abs(shoulder_angle - self.prev["shoulder"])
         vel_e = 0 if self.prev["elbow"] is None else abs(elbow_angle - self.prev["elbow"])
         vel_w = 0 if self.prev["wrist"] is None else abs(wrist_angle - self.prev["wrist"])
-
+        vel_ser = 0 if self.prev["shoulder_external_rotation"] is None else abs(shoulder_external_rotation - self.prev["shoulder_external_rotation"])
+        vel_sir = 0 if self.prev["shoulder_internal_rotation"] is None else abs(shoulder_internal_rotation - self.prev["shoulder_internal_rotation"])
         # -----------------------------
         # تنعيم متكيف
         # -----------------------------
         shoulder_angle = AngleMath.smooth_angle(self.prev["shoulder"], shoulder_angle, vel_s)
         elbow_angle = AngleMath.smooth_angle(self.prev["elbow"], elbow_angle, vel_e)
         wrist_angle = AngleMath.smooth_angle(self.prev["wrist"], wrist_angle, vel_w)
-
+        shoulder_external_rotation = AngleMath.smooth_angle(self.prev["shoulder_external_rotation"], shoulder_external_rotation, vel_ser)
+        shoulder_internal_rotation = AngleMath.smooth_angle(self.prev["shoulder_internal_rotation"], shoulder_internal_rotation, vel_sir)
         # حفظ السابق
         self.prev["shoulder"] = shoulder_angle
         self.prev["elbow"] = elbow_angle
         self.prev["wrist"] = wrist_angle
-
+        self.prev["shoulder_external_rotation"] = shoulder_external_rotation
+        self.prev["shoulder_internal_rotation"] = shoulder_internal_rotation
         # حفظ الحالي
         self.current["shoulder"] = shoulder_angle
         self.current["elbow"] = elbow_angle
         self.current["wrist"] = wrist_angle
-
+        self.current["shoulder_external_rotation"] = shoulder_external_rotation
+        self.current["shoulder_internal_rotation"] = shoulder_internal_rotation
         # -----------------------------
         # ROM tracking
         # -----------------------------
@@ -145,5 +210,11 @@ class PoseTracker:
 
         cv2.putText(frame, f"{side.capitalize()} Wrist: {int(wrist_angle)}",
                     (20,100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0),2)
+        
+        cv2.putText(frame, f"{side.capitalize()} Shoulder Ext Rot: {int(shoulder_external_rotation)}",
+                    (20,130), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0),2)
+        
+        cv2.putText(frame, f"{side.capitalize()} Shoulder Int Rot: {int(shoulder_internal_rotation)}",
+                    (20,160), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0),2)
 
         return True

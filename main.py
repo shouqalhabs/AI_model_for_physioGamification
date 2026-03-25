@@ -42,7 +42,7 @@ db = DatabaseManager()
 pose_tracker = PoseTracker()
 hand_tracker = HandTracker()
 combined = CombinedTracker(pose_tracker, hand_tracker)
-# assessment = InitialAssessment(db, pose_tracker, hand_tracker,USER_ID)
+#assessment = InitialAssessment(db, pose_tracker, hand_tracker,USER_ID)
 
 session = GameSession()
 
@@ -72,7 +72,7 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
         combined.run(frame, w, h, mp_image, timestamp_ms,
                      hand_landmarker, pose_landmarker, affected_arm)
 
-        # cv2.imshow("Physio Assessment", frame)
+        #cv2.imshow("Physio Assessment", frame)
 
         
         game1.update_basket(
@@ -111,5 +111,5 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
 cap.release()
 cv2.destroyAllWindows()
 
-# assessment.save()
+#assessment.save()
 session.submit(USER_ID)

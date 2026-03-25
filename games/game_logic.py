@@ -32,8 +32,8 @@ class CatchGame:
 
         # رينج الكوع الافتراضي (يمكن استبداله من DB عند بدء الجلسة)
         self.elbow_min = elbow_min if elbow_min is not None else 60.0
-        self.elbow_max = 180
-        # elbow range calculation is wrong, better to be between the elbow strength not 180 to his/her best
+        self.elbow_max = elbow_max if elbow_max is not None else 160.0
+
         # حساسية منع التعويض
         self.shoulder_move_threshold = shoulder_move_threshold
         self.hip_move_threshold = hip_move_threshold
@@ -77,77 +77,71 @@ class CatchGame:
     # تحميل رينج المريض من DB (اختياري)
     # -----------------------------
     def load_patient_rom(self, db_manager: DatabaseManager, patient_id):
-        """
-        يحاول جلب elbow_min/elbow_max من قاعدة البيانات.
-        يفترض أن db_manager.get_initial_assessment(patient_id) يعيد dict أو None.
-        """
         try:
             data = db_manager.get_stats(patient_id)
             if not data:
                 return False
-            
-            elbow_min = data.get("elbow")
 
-            if elbow_min is not None:
-                self.elbow_min = float(elbow_min)
-                self.elbow_max = 180.0   # ثابت دائماً
-                return True
-            
-            return False
-        
+            # Elbow ROM
+            elbow_base = data.get("elbow")
+            if elbow_base is not None:
+                elbow_base = float(elbow_base)
+                self.elbow_min = elbow_base - 15
+                self.elbow_max = elbow_base + 15
+
+            # Shoulder internal/external ROM
+            int_rom = data.get("sholder_int_rotation")
+            ext_rom = data.get("sholder_ext_rotation")
+
+            self.internal_rom = float(int_rom) if int_rom not in (None, 0) else 60
+            self.external_rom = float(ext_rom) if ext_rom not in (None, 0) else 60
+
+            return True
+
         except Exception:
-            # لا نرمي استثناء هنا، نستخدم القيم الافتراضية
             return False
+
 
     # -----------------------------
     # تحديث السلة بناءً على Trackers المدموج
     # -----------------------------
     def update_basket(self, combined_tracker, w, h, frame, db_manager: DatabaseManager, patient_id):
-        """
-        combined_tracker: instance of CombinedTracker الذي يحتوي على pose_tracker و hand_tracker و pose_landmarks
-        db_manager, patient_id: اختياريان لتحميل ROM المريض قبل بدء اللعب
-        """
 
         pose_tracker = combined_tracker.pose_tracker
         hand_tracker = combined_tracker.hand_tracker
         pose_landmarks = combined_tracker.pose_landmarks
 
-        self.load_patient_rom(db_manager, patient_id)
+        # Load ROM once
+        if not hasattr(self, "_rom_loaded"):
+            self.load_patient_rom(db_manager, patient_id)
+            self._rom_loaded = True
 
-        # تأكد من وجود قيم جاهزة في الـ trackers
-        shoulder_angle = getattr(pose_tracker, "current", {}).get("shoulder", None)
-        elbow_angle = getattr(pose_tracker, "current", {}).get("elbow", None)
+        # Read rotation values from PoseTracker
+        pt = pose_tracker.current
 
+        internal = pt.get("shoulder_internal_rotation", 0.0)
+        external = pt.get("shoulder_external_rotation", 0.0)
 
-        # rotation_value من HandTracker: حاول استخدام خاصية موجودة أو احسب من wrist landmark
-        rotation_value = None
-        if hasattr(hand_tracker, "rotation_value"):
-            rotation_value = getattr(hand_tracker, "rotation_value")
-        elif hand_tracker.current_hand_landmarks is not None and pose_landmarks is not None:
-            # حساب بسيط كنقطة احتياط: فرق X بين رسغ اليد وكتف الجسم (normalized)
-            # in the initial assessment sholder rotation need to be deducted. also need to be added to the database.
-            try:
-                # wrist from hand landmarks (index 0) و shoulder from pose_landmarks
-                wrist_lm = hand_tracker.current_hand_landmarks[0]
-                if self.side == "left":
-                    shoulder_id = 11
-                else:
-                    shoulder_id = 12
-                shoulder_lm = pose_landmarks[shoulder_id]
-                rel_x = wrist_lm.x - shoulder_lm.x
-                rotation_value = (rel_x + 0.3) / 0.6
-                rotation_value = max(0.0, min(1.0, rotation_value))
-            except Exception:
-                rotation_value = 0.5
+        shoulder_smoothed = pt.get("shoulder", 0.0)
+
+        elbow_angle = pt.get("elbow", 0.0)
+
+        # Normalize rotation to 0..1
+        max_internal = max(1.0, float(self.internal_rom))
+        max_external = max(1.0, float(self.external_rom))
+
+        if shoulder_smoothed > 0:
+            norm = shoulder_smoothed / max_internal
         else:
-            rotation_value = 0.5
-        # these values needs to be more precise and get the sholder external and internal rotaion. also need to be added to the database.
-        # this rotation calculation algorithm is very basic and needs to be improved by using the wrist and shoulder landmarks to calculate the actual rotation of the arm, also need to be calibrated for each patient in the initial assessment and saved in the database for better accuracy during the game sessions.
+            norm = -shoulder_smoothed / max_external
 
-        # مواقع بكسل للكتف والورك (لاحتساب الحركة)
+        norm = max(-1.0, min(1.0, norm))
+        rotation_value = (norm + 1.0) / 2.0
+
+        # Compensation check
         if pose_landmarks is None:
-            # لا توجد بيانات وضعية كافية
-            cv2.putText(frame, "Low Confidence", (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            cv2.putText(frame, "Low Confidence", (20,120),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
             return
 
         if self.side == "left":
@@ -158,7 +152,6 @@ class CatchGame:
         sx, sy = int(pose_landmarks[shoulder_id].x * w), int(pose_landmarks[shoulder_id].y * h)
         hx, hy = int(pose_landmarks[hip_id].x * w), int(pose_landmarks[hip_id].y * h)
 
-        # حساب حركة الكتف والجذع (تعويض) بناءً على مواقع البكسل السابقة
         if self.prev_shoulder_px is None:
             self.prev_shoulder_px = (sx, sy)
             self.prev_hip_px = (hx, hy)
@@ -166,75 +159,47 @@ class CatchGame:
         shoulder_move = abs(sx - self.prev_shoulder_px[0]) + abs(sy - self.prev_shoulder_px[1])
         hip_move = abs(hx - self.prev_hip_px[0]) + abs(hy - self.prev_hip_px[1])
 
-        # تحديث السابق
         self.prev_shoulder_px = (sx, sy)
         self.prev_hip_px = (hx, hy)
 
-        # -----------------------------
-        # منطق منع التعويض باستخدام ROM المريض
-        # -----------------------------
         compensation = False
 
         if shoulder_move > self.shoulder_move_threshold:
             compensation = True
-            cv2.putText(frame, "Keep shoulder stable!", (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            cv2.putText(frame, "Keep shoulder stable!", (50,120),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
 
         if hip_move > self.hip_move_threshold:
             compensation = True
-            cv2.putText(frame, "Keep trunk stable!", (50, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+            cv2.putText(frame, "Keep trunk stable!", (50,160),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
 
-        # استخدم رينج الكوع الخاص بالمريض
-        try:
-            # إذا pose_tracker يحتفظ بـ rom_min/rom_max استخدمها كـ fallback
-            if elbow_angle is None:
-                elbow_angle = getattr(pose_tracker, "current", {}).get("elbow", None)
+        # Elbow ROM check
+        if not (self.elbow_min <= elbow_angle <= self.elbow_max):
+            compensation = True
+            cv2.putText(frame,
+                        f"Keep elbow between {int(self.elbow_min)}-{int(self.elbow_max)} deg",
+                        (50,200),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
 
-            elbow_min = getattr(self, "elbow_min", None)
-            elbow_max = getattr(self, "elbow_max", None)
-
-            # fallback إلى pose_tracker ROM لو لم تتوفر من DB
-            if (elbow_min is None or elbow_max is None) and hasattr(pose_tracker, "rom_min"):
-                elbow_min = min(elbow_min or 999, pose_tracker.rom_min.get("elbow", 999))
-                elbow_max = max(elbow_max or 0, pose_tracker.rom_max.get("elbow", 0))
-
-            if elbow_angle is not None and (elbow_min is not None and elbow_max is not None):
-                if not (elbow_min <= elbow_angle <= elbow_max):
-                    compensation = True
-                    cv2.putText(frame,
-                                f"Keep elbow between {int(elbow_min)}-{int(elbow_max)} deg",
-                                (50, 200),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.8,
-                                (0, 0, 255),
-                                2)
-        except Exception:
-            # لا نوقف اللعبة بسبب خطأ بسيط في الفحص
-            pass
-
-        # لو فيه تعويض → لا نحرك السلة
         if compensation:
             return
 
-        # -----------------------------
-        # تحريك السلة بناءً على rotation_value
-        # -----------------------------
+        # Move basket
         target_x = int(rotation_value * self.w)
         self.basket_x = int(0.7 * self.basket_x + 0.3 * target_x)
 
-        # -----------------------------
-        # تسجيل بيانات الجلسة (إن وُجدت)
-        # -----------------------------
+        # Log session
         if self.session is not None:
             self.session.add_data(
-                shoulder_angle=shoulder_angle if shoulder_angle is not None else 0,
-                shoulder_external_rotation= rotation_value if rotation_value is not None else 0,
-                shoulder_internal_rotation=0,
-                elbow_angle=elbow_angle if elbow_angle is not None else 0,
-                wrist_angle= 0,
-                max_thumb=0,
-                max_index=0,
-                max_middle=0,
-                max_ring=0,
-                max_pinky=0
+                shoulder_angle= pt.get("shoulder", 0),
+                shoulder_external_rotation= external,
+                shoulder_internal_rotation= internal,
+                elbow_angle= elbow_angle,
+                wrist_angle= pt.get("wrist", 0),
+                thumb= hand_tracker.finger_angles.get("thumb", 0),
+                index= hand_tracker.finger_angles.get("index", 0),
+                middle= hand_tracker.finger_angles.get("middle", 0),
+                ring= hand_tracker.finger_angles.get("ring", 0),
+                pinky= hand_tracker.finger_angles.get("pinky", 0)
             )
-            # either here on in session. data need to be exported to the database.
