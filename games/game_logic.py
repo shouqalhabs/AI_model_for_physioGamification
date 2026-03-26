@@ -86,8 +86,8 @@ class CatchGame:
             elbow_base = data.get("elbow")
             if elbow_base is not None:
                 elbow_base = float(elbow_base)
-                self.elbow_min = elbow_base - 15
-                self.elbow_max = elbow_base + 15
+                self.elbow_min = elbow_base - 50
+                self.elbow_max = elbow_base + 50
 
             # Shoulder internal/external ROM
             int_rom = data.get("sholder_int_rotation")
@@ -119,24 +119,19 @@ class CatchGame:
         # Read rotation values from PoseTracker
         pt = pose_tracker.current
 
-        internal = pt.get("shoulder_internal_rotation", 0.0)
-        external = pt.get("shoulder_external_rotation", 0.0)
-
-        shoulder_smoothed = pt.get("shoulder", 0.0)
+        signed_rotation = pt.get("shoulder_rotation", 0.0)
 
         elbow_angle = pt.get("elbow", 0.0)
 
         # Normalize rotation to 0..1
-        max_internal = max(1.0, float(self.internal_rom))
-        max_external = max(1.0, float(self.external_rom))
-
-        if shoulder_smoothed > 0:
-            norm = shoulder_smoothed / max_internal
-        else:
-            norm = -shoulder_smoothed / max_external
-
+        # Normalize signed rotation to -1..1
+        max_rot = max(1.0, float(max(self.internal_rom, self.external_rom)))
+        norm = signed_rotation / max_rot
         norm = max(-1.0, min(1.0, norm))
+
+        # Convert -1..1 → 0..1
         rotation_value = (norm + 1.0) / 2.0
+
 
         # Compensation check
         if pose_landmarks is None:
@@ -193,8 +188,8 @@ class CatchGame:
         if self.session is not None:
             self.session.add_data(
                 shoulder_angle= pt.get("shoulder", 0),
-                shoulder_external_rotation= external,
-                shoulder_internal_rotation= internal,
+                shoulder_external_rotation= pt.get("shoulder_external_rotation", 0),
+                shoulder_internal_rotation= pt.get("shoulder_internal_rotation", 0),
                 elbow_angle= elbow_angle,
                 wrist_angle= pt.get("wrist", 0),
                 thumb= hand_tracker.finger_angles.get("thumb", 0),

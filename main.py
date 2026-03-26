@@ -72,8 +72,7 @@ with vision.PoseLandmarker.create_from_options(pose_options) as pose_landmarker,
         combined.run(frame, w, h, mp_image, timestamp_ms,
                      hand_landmarker, pose_landmarker, affected_arm)
 
-        #cv2.imshow("Physio Assessment", frame)
-
+        #cv2.imshow("Rehab Game", frame)
         
         game1.update_basket(
             combined,

@@ -79,47 +79,58 @@ class AngleMath:
     
     @staticmethod
     def calculate_signed_rotation(shoulder, elbow, wrist, ref_vector=None, eps=1e-8):
+        # Convert to numpy arrays
         s = np.asarray(shoulder, dtype=float)
         e = np.asarray(elbow, dtype=float)
         w = np.asarray(wrist, dtype=float)
 
-        # 1) humerus axis (shoulder -> elbow)
-        u = e - s
-        u_norm = np.linalg.norm(u) + eps
-        u_hat = u / u_norm
+        # ----------------------------------------
+        # 1) Humerus axis (shoulder → elbow)
+        # ----------------------------------------
+        humerus = e - s
+        humerus_norm = np.linalg.norm(humerus) + eps
+        humerus_hat = humerus / humerus_norm
 
-        # 2) wrist vector relative to shoulder
-        w_vec = w - s
+        # ----------------------------------------
+        # 2) Wrist vector relative to shoulder
+        # ----------------------------------------
+        wrist_vec = w - s
 
-        # 3) project wrist vector onto plane perpendicular to humerus axis
-        w_proj = w_vec - np.dot(w_vec, u_hat) * u_hat
-        w_proj_norm = np.linalg.norm(w_proj) + eps
-        w_p = w_proj / w_proj_norm
+        # ----------------------------------------
+        # 3) Project wrist vector onto plane ⟂ humerus axis
+        # ----------------------------------------
+        wrist_proj = wrist_vec - np.dot(wrist_vec, humerus_hat) * humerus_hat
+        wrist_proj_norm = np.linalg.norm(wrist_proj) + eps
+        wrist_p = wrist_proj / wrist_proj_norm
 
-        # 4) reference vector: if provided use it, else use a fallback
+        # ----------------------------------------
+        # 4) Reference vector projection
+        # ----------------------------------------
         if ref_vector is not None:
             r = np.asarray(ref_vector, dtype=float)
-            r_proj = r - np.dot(r, u_hat) * u_hat
-            r_proj_norm = np.linalg.norm(r_proj) + eps
-            r_p = r_proj / r_proj_norm
         else:
-            # fallback: construct a lateral reference using shoulder-elbow and global up
-            # This is a weak fallback; better to supply a calibrated ref_vector per patient.
-            global_up = np.array([0.0, -1.0, 0.0])  # image coords: negative y = up (adjust if needed)
-            # make sure global_up not parallel to u_hat
-            if abs(np.dot(global_up, u_hat)) > 0.95:
-                global_up = np.array([0.0, 0.0, 1.0])
-            r_proj = global_up - np.dot(global_up, u_hat) * u_hat
-            r_proj_norm = np.linalg.norm(r_proj) + eps
-            r_p = r_proj / r_proj_norm
+            # fallback reference (global up)
+            r = np.array([0.0, -1.0, 0.0])
+            # avoid parallel case
+            if abs(np.dot(r, humerus_hat)) > 0.95:
+                r = np.array([0.0, 0.0, 1.0])
 
-        # 5) compute signed angle between r_p and w_p around axis u_hat
-        cross = np.cross(r_p, w_p)
-        cross_dot = np.dot(u_hat, cross)  # sign
-        dot = np.dot(r_p, w_p)
-        angle_rad = np.arctan2(cross_dot, dot)
+        r_proj = r - np.dot(r, humerus_hat) * humerus_hat
+        r_proj_norm = np.linalg.norm(r_proj) + eps
+        r_p = r_proj / r_proj_norm
 
-        return np.degrees(angle_rad)
+        # ----------------------------------------
+        # 5) Signed angle between r_p and wrist_p around humerus axis
+        # ----------------------------------------
+        cross_vec = np.cross(r_p, wrist_p)
+        sign = np.dot(humerus_hat, cross_vec)
+        dot = np.dot(r_p, wrist_p)
+
+        angle_rad = np.arctan2(sign, dot)
+        angle_deg = np.degrees(angle_rad)
+
+        return angle_deg
+
     
     @staticmethod
     def calculate_internal_rotation(shoulder, elbow, wrist, ref_vector=None):
