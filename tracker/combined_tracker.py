@@ -21,7 +21,8 @@ class CombinedTracker:
                 self.pose_landmarks,
                 w,
                 h,
-                side=injured_hand
+                side=injured_hand,
+                calculate=["all"]
             )
 
             return valid
