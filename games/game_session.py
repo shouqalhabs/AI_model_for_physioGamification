@@ -1,5 +1,5 @@
 from database.db_manager import DatabaseManager
-db = DatabaseManager()
+db = DatabaseManager() #bad practice should inject idk 
 
 class GameSession:
     
